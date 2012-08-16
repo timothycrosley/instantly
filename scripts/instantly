@@ -10,14 +10,19 @@
 import os
 import shutil
 import sys
+from distutils.dir_util import copy_tree
 from glob import glob
 from subprocess import Popen
 
 from configobj import ConfigObj
 
+import InstantlyFiles
 
-templatePath = os.environ.get("INSTANT_TEMPLATES_PATH", "instant_templates/")
+templatePath = os.environ.get("INSTANT_TEMPLATES_PATH", os.path.expanduser('~') + "/.instant_templates/")
 
+if not os.path.exists(templatePath):
+    copy_tree(InstantlyFiles.__path__, templatePath)
+    
 templates = []
 for templateName in glob(templatePath + "*"):
     templates.append(os.path.basename(templateName))
