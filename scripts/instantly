@@ -21,7 +21,7 @@ import InstantlyFiles
 templatePath = os.environ.get("INSTANT_TEMPLATES_PATH", os.path.expanduser('~') + "/.instant_templates/")
 
 if not os.path.exists(templatePath):
-    copy_tree(InstantlyFiles.__path__, templatePath)
+    copy_tree(InstantlyFiles.__path__[0], templatePath)
     
 templates = []
 for templateName in glob(templatePath + "*"):
