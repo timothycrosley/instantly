@@ -12,6 +12,6 @@ setup(name='Instantly',
       license = "GNU GPLv2",
       scripts=['scripts/instantly',],
       requires = ['configobj',],
-      package_data={'InstantlyFiles': ["InstantlyFiles/instant_templates/create_instant_template/*"]},
+      package_data={'InstantlyFiles': ["instant_templates/create_instant_template/*"]},
       include_package_data=True,
       packages=['InstantlyFiles',],)
