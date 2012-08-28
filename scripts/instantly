@@ -70,6 +70,7 @@ elif command == "help":
     print "instantly share [template name]"
     print "\t Share a template you have created with others online"
     print "\t Must register your google account with http://instantly.pl/ to do this"
+    sys.exit(0)
 elif command == "drop":
     templateName = sys.argv[2]
     if raw_input("Are you sure you want to delete %s (y/n)? " % templateName).lower() == "y":
@@ -82,12 +83,14 @@ elif command == "share":
     client = createClient()
     with tarfile.open(templatePath + templateName + ".tar.gz", "w") as tar:
         tar.add(templatePath + templateName, arcname=templateName)
-    with open(templatePath + templateName) as tar:
+    with open(templatePath + templateName + ".tar.gz") as tar:
         encodedTemplate = base64.encode(tar)
 
     client.post("InstantTemplate", {"license":template["Info"].get("license", ""),
                                     "name":sys.argv[2], "description":template["Info"].get("description", ""),
                                     "template":encodedTemplate})
+    print "Successfully shared %s, thanks for helping to expand the number of instant templates!" % templateName
+    sys.exit(0)
 else:
     templateName = command
 
