@@ -83,8 +83,8 @@ elif command == "share":
     client = createClient()
     with tarfile.open(templatePath + templateName + ".tar.gz", "w") as tar:
         tar.add(templatePath + templateName, arcname=templateName)
-    with open(templatePath + templateName + ".tar.gz") as tar:
-        encodedTemplate = base64.encode(tar)
+    with open(templatePath + templateName + ".tar.gz", 'rb') as tar:
+        encodedTemplate = tar.read().encode("zlib").encode("base64")
 
     client.post("InstantTemplate", {"license":template["Info"].get("license", ""),
                                     "name":sys.argv[2], "description":template["Info"].get("description", ""),
