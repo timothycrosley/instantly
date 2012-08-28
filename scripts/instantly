@@ -8,8 +8,12 @@
 """
 
 import os
+import tarfile
+import base64
 import shutil
 import sys
+from Rest import RestClient
+from getpass import getpass
 from distutils.dir_util import copy_tree
 from glob import glob
 from subprocess import Popen
@@ -19,32 +23,75 @@ from configobj import ConfigObj
 import InstantlyFiles
 
 templatePath = os.environ.get("INSTANT_TEMPLATES_PATH", os.path.expanduser('~') + "/.instant_templates/")
-
 if not os.path.exists(templatePath):
     copy_tree(InstantlyFiles.__path__[0] + "/instant_templates/", templatePath)
-    
+
 templates = []
 for templateName in glob(templatePath + "*"):
     templates.append(os.path.basename(templateName))
 templates.sort()
 
+def createClient():
+    username = raw_input("Username:")
+    password = getpass()
+    return RestClient("http://www.instantly.pl/api/", username, password)
+
 if not len(sys.argv) > 1:
     print "Instantly allows you to expand simple templates, that take in a set number of arguments"
     print "Usage: instantly [template name] or instantly undo [template name]"
+    print "       type instantly help for full instructions."
     print ""
-    print "templates:"
+    print "Installed Templates:"
     print "\t", templates
     sys.exit(1)
 
 undo = False
-templateName = sys.argv[1]
+command = sys.argv[1]
 extraInputs = sys.argv[2:]
-if templateName == "undo":
+if command == "undo":
     undo = True
     templateName = sys.argv[2]
     extraInputs = sys.argv[3:]
+elif command == "help":
+    print "Instantly Commands"
+    print ""
+    print "instantly [template name]"
+    print "\t Expand the named template locally"
+    print "instantly help"
+    print "\t Get full list of commands / help text"
+    print "instantly find [template name]"
+    print "\t Find pre-made templates to automate a task online"
+    print "instantly grab [template name]"
+    print "\t Add a template shared online to your local template repository"
+    print "instantly drop [template name]"
+    print "\t Permanently removes an installed template locally"
+    print "instantly create_instant_template"
+    print "\t Create a new instant template to automate a task"
+    print "instantly share [template name]"
+    print "\t Share a template you have created with others online"
+    print "\t Must register your google account with http://instantly.pl/ to do this"
+elif command == "drop":
+    templateName = sys.argv[2]
+    if raw_input("Are you sure you want to delete %s (y/n)? " % templateName).lower() == "y":
+        shutil.rmtree(templatePath + templateName)
+        print "Successfully removed %s from local templates" % templateName
+    sys.exit(0)
+elif command == "share":
+    templateName = sys.argv[2]
+    template = ConfigObj(templatePath + templateName + "/definition", interpolation=False)
+    client = createClient()
+    with tarfile.open(templatePath + templateName + ".tar.gz", "w") as tar:
+        tar.add(templatePath + templateName, arcname=templateName)
+    with open(templatePath + templateName) as tar:
+        encodedTemplate = base64.encode(tar)
 
-elif not templateName in templates:
+    client.post("InstantTemplate", {"license":template["Info"].get("license", ""),
+                                    "name":sys.argv[2], "description":template["Info"].get("description", ""),
+                                    "template":encodedTemplate})
+else:
+    templateName = command
+
+if not templateName in templates:
     print "Sorry :( there is no way to instantly '%s', but you could always add one ;)" % templateName
     sys.exit(1)
 

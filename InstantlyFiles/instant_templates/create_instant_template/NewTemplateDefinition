@@ -3,6 +3,7 @@ label = "%(label)s"
 name = "%(name)s"
 description = "%(description)s"
 icon = "Default"
+license = "GPLV2"
 
 [Arguments]
 # Put inputs you want to gather from the user, along with the explanation presented to the user here. IE:

@@ -2,6 +2,7 @@
 label = "Instant Template"
 description = "Adds a new instant template to the list of options to be created."
 icon = "Add"
+license = "GPLV2"
 
 [Arguments]
     [[label]]
