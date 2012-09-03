@@ -7,20 +7,29 @@
         Simple tool to expand 'instant' templates
 """
 
-import os
-import tarfile
 import base64
+import json
+import os
 import shutil
 import sys
-from Rest import RestClient
-from getpass import getpass
+import tarfile
 from distutils.dir_util import copy_tree
+from getpass import getpass
 from glob import glob
 from subprocess import Popen
 
-from configobj import ConfigObj
-
 import InstantlyFiles
+from configobj import ConfigObj
+from Rest import GOOGLE, RestClient
+
+TEMPLATE_DESCRIPTION = """
+ %(name)s
+     Author: %(author)s
+     License: %(license)s
+     Last Updated: %(lastUpdated)s
+     Description:
+         %(description)s
+"""
 
 templatePath = os.environ.get("INSTANT_TEMPLATES_PATH", os.path.expanduser('~') + "/.instant_templates/")
 if not os.path.exists(templatePath):
@@ -28,13 +37,19 @@ if not os.path.exists(templatePath):
 
 templates = []
 for templateName in glob(templatePath + "*"):
-    templates.append(os.path.basename(templateName))
+    if os.path.isdir(templateName):
+        templates.append(os.path.basename(templateName))
 templates.sort()
 
-def createClient():
-    username = raw_input("Username:")
-    password = getpass()
-    return RestClient("http://www.instantly.pl/api/", username, password)
+def createClient(authenticated=True):
+    URL = "http://www.instantly.pl/api/"
+    if authenticated:
+        print "Please enter the login credentials for a google account that has been registered with instantly.pl"
+        username = raw_input("Username (email): ")
+        password = getpass()
+        return RestClient(URL, username, password, authType=GOOGLE)
+    else:
+        return RestClient(URL)
 
 if not len(sys.argv) > 1:
     print "Instantly allows you to expand simple templates, that take in a set number of arguments"
@@ -81,21 +96,55 @@ elif command == "share":
     templateName = sys.argv[2]
     template = ConfigObj(templatePath + templateName + "/definition", interpolation=False)
     client = createClient()
-    with tarfile.open(templatePath + templateName + ".tar.gz", "w") as tar:
+    tarPath = templatePath + templateName + ".tar.gz"
+    with tarfile.open(tarPath, "w") as tar:
         tar.add(templatePath + templateName, arcname=templateName)
-    with open(templatePath + templateName + ".tar.gz", 'rb') as tar:
+    with open(tarPath, 'rb') as tar:
         encodedTemplate = tar.read().encode("zlib").encode("base64")
 
     client.post("InstantTemplate", {"license":template["Info"].get("license", ""),
-                                    "name":sys.argv[2], "description":template["Info"].get("description", ""),
+                                    "name":templateName, "description":template["Info"].get("description", ""),
                                     "template":encodedTemplate})
+    os.remove(tarPath)
     print "Successfully shared %s, thanks for helping to expand the number of instant templates!" % templateName
+    sys.exit(0)
+elif command == "find":
+    searchTerm = sys.argv[2]
+    results = createClient(authenticated=False).get("find/%s" % searchTerm)
+    if not results:
+        print "Sorry: no templates have been shared that match the search term '%s'," % searchTerm
+        print "       but you could always add one ;)"
+        sys.exit(0)
+
+    print "Instantly found the following templates:"
+    for result in results:
+        print TEMPLATE_DESCRIPTION % result
+
+    print " To install one of these templates run: instantly grab [template_name]"
+    sys.exit(0)
+elif command == "grab":
+    templateName = sys.argv[2]
+    template = createClient(authenticated=False).get("InstantTemplate/%s" % templateName)
+    if not template:
+        print "Sorry: no one has thought of a way to instantly '%s'," % searchTerm
+        print "       but you could always create one ;)"
+        sys.exit(0)
+    tarPath = templatePath + templateName + ".tar.gz"
+    with open(tarPath, "wb") as tar:
+        tar.write(template['template'].decode("base64").decode("zlib"))
+    tarfile.open(tarPath).extractall(templatePath)
+    os.remove(tarPath)
+
+    print "%(name)s has been installed as a local template. Run 'instantly %(name)s' to expand it." % \
+          {"name":templateName}
     sys.exit(0)
 else:
     templateName = command
 
 if not templateName in templates:
-    print "Sorry :( there is no way to instantly '%s', but you could always add one ;)" % templateName
+    print "Sorry: there is no way to instantly '%s', but you could always add one ;)" % templateName
+    print ""
+    print "To see if anyone else has run: instantly find %s" % templateName
     sys.exit(1)
 
 template = ConfigObj(templatePath + templateName + "/definition", interpolation=False)

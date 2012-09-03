@@ -11,7 +11,7 @@ setup(name='Instantly',
       download_url='https://github.com/timothycrosley/Instantly/blob/master/dist/Instantly-0.1.tar.gz?raw=true',
       license = "GNU GPLv2",
       scripts=['scripts/instantly',],
-      requires = ['configobj',],
+      requires = ['configobj', 'rest'],
       package_data={'InstantlyFiles': ["instant_templates/create_instant_template/*"]},
       include_package_data=True,
       packages=['InstantlyFiles',],)
