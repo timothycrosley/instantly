@@ -247,9 +247,9 @@ if undo:
 for source, destination in fileAdditions.iteritems():
     with open(TEMPLATE_PATH + templateName + "/" + source) as inFile:
         if not "::" in destination:
-            (outFileMode, outFileName) = ("", destination % substitutions)
+            (mode, outFileName) = ("", destination % substitutions)
         else:
-            (outFileMode, outFileName) = (destination % substitutions).split("::")
+            (mode, outFileName) = (destination % substitutions).split("::")
         substitutions[source] = outFileName
 
         outDirectory = os.path.dirname(outFileName)
