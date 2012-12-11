@@ -255,7 +255,7 @@ for source, destination in fileAdditions.iteritems():
 
         inFileContent = inFile.read() % substitutions
         if mode == "APPEND":
-            with open(outFileName, 'a') as outFile):
+            with open(outFileName, 'a') as outFile:
                 outFile.write(inFileContent)
         elif mode.startswith("REPLACE"):
             toReplace = mode[8:]
@@ -266,12 +266,12 @@ for source, destination in fileAdditions.iteritems():
             placement = mode[7:]
             with open(outFileName, 'r') as currentFile:
                 with open(outFileName, 'w') as outFile:
-                    outFile.write(inFile.read().replace(placement, inFileContent + "\n" + placement)
+                    outFile.write(inFile.read().replace(placement, inFileContent + "\n" + placement))
         elif mode.startswith("AFTER"):
             placement = mode[6:]
             with open(outFileName, 'r') as currentFile:
                 with open(outFileName, 'w') as outFile:
-                    outFile.write(inFile.read().replace(placement, placement + "\n" + inFileContent)
+                    outFile.write(inFile.read().replace(placement, placement + "\n" + inFileContent))
         else:
             with open(outFileName, 'w') as outFile:
                 outFile.write(inFileContent)
