@@ -247,9 +247,9 @@ if undo:
 for source, destination in fileAdditions.iteritems():
     with open(TEMPLATE_PATH + templateName + "/" + source) as inFile:
         if not "::" in destination:
-            (mode, outFileName) = ("", destination % substitutions)
+            (outFileName, mode) = (destination % substitutions, "")
         else:
-            (mode, outFileName) = (destination % substitutions).split("::")
+            (outFileName, mode) = (destination % substitutions).split("::")
         substitutions[source] = outFileName
 
         outDirectory = os.path.dirname(outFileName)
@@ -263,18 +263,21 @@ for source, destination in fileAdditions.iteritems():
         elif mode.startswith("REPLACE"):
             toReplace = mode[8:]
             with open(outFileName, 'r') as currentFile:
+                currentFileContents = currentFile.read()
                 with open(outFileName, 'w') as outFile:
-                    outFile.write(currentFile.read().replace(toReplace, inFileContent))
+                    outFile.write(currentFileContents.replace(toReplace, inFileContent))
         elif mode.startswith("BEFORE"):
             placement = mode[7:]
             with open(outFileName, 'r') as currentFile:
+                currentFileContents = currentFile.read()
                 with open(outFileName, 'w') as outFile:
-                    outFile.write(inFile.read().replace(placement, inFileContent + "\n" + placement))
+                    outFile.write(currentFileContents.replace(placement, inFileContent + "\n" + placement))
         elif mode.startswith("AFTER"):
             placement = mode[6:]
             with open(outFileName, 'r') as currentFile:
+                currentFileContents = currentFile.read()
                 with open(outFileName, 'w') as outFile:
-                    outFile.write(inFile.read().replace(placement, placement + "\n" + inFileContent))
+                    outFile.write(currentFileContents.replace(placement, placement + "\n" + inFileContent))
         else:
             with open(outFileName, 'w') as outFile:
                 outFile.write(inFileContent)
