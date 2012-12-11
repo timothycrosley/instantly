@@ -250,7 +250,7 @@ for source, destination in fileAdditions.iteritems():
             (outFileMode, outFileName) = ("", destination % substitutions)
         else:
             (outFileMode, outFileName) = (destination % substitutions).split("::")
-        substitutions[source] = outFileNames
+        substitutions[source] = outFileName
 
         outDirectory = os.path.dirname(outFileName)
         if not os.path.exists(outDirectory):
