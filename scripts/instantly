@@ -246,16 +246,36 @@ if undo:
 
 for source, destination in fileAdditions.iteritems():
     with open(TEMPLATE_PATH + templateName + "/" + source) as inFile:
-        outFileName = destination % substitutions
-        substitutions[source] = outFileName
+        outFileMode, outFileName = (destination % substitutions).split("::")
+        substitutions[source] = outFileNames
 
         outDirectory = os.path.dirname(outFileName)
         if not os.path.exists(outDirectory):
             os.makedirs(outDirectory)
 
-        with open(outFileName, 'w') as outFile:
-            outFile.write(inFile.read() % substitutions)
-            repository.addFile(outFileName)
+        inFileContent = inFile.read() % substitutions
+        if mode == "APPEND":
+            with open(outFileName, 'a') as outFile):
+                outFile.write(inFileContent)
+        elif mode.startswith("REPLACE"):
+            toReplace = mode[8:]
+            with open(outFileName, 'r') as currentFile:
+                with open(outFileName, 'w') as outFile:
+                    outFile.write(currentFile.read().replace(toReplace, inFileContent))
+        elif mode.startswith("BEFORE"):
+            placement = mode[7:]
+            with open(outFileName, 'r') as currentFile:
+                with open(outFileName, 'w') as outFile:
+                    outFile.write(inFile.read().replace(placement, inFileContent + "\n" + placement)
+        elif mode.startswith("AFTER"):
+            placement = mode[6:]
+            with open(outFileName, 'r') as currentFile:
+                with open(outFileName, 'w') as outFile:
+                    outFile.write(inFile.read().replace(placement, placement + "\n" + inFileContent)
+        else:
+            with open(outFileName, 'w') as outFile:
+                outFile.write(inFileContent)
+                repository.addFile(outFileName)
 
 scripts = template.get('Scripts', {})
 onfinish = scripts.get('onfinish', [])
