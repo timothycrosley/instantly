@@ -47,7 +47,7 @@ TEMPLATE_DESCRIPTION = """
          %(description)s
 """
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 class AbstractRepository(object):
     """
@@ -168,6 +168,7 @@ elif command == "share":
     client = createClient()
     tarPath = TEMPLATE_PATH + templateName + ".tar.gz"
     with tarfile.open(tarPath, "w") as tar:
+        tar.dereference = True
         tar.add(TEMPLATE_PATH + templateName, arcname=templateName)
     with open(tarPath, 'rb') as tar:
         encodedTemplate = tar.read().encode("zlib").encode("base64")
