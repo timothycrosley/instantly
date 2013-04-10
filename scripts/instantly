@@ -47,7 +47,7 @@ TEMPLATE_DESCRIPTION = """
          %(description)s
 """
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 class AbstractRepository(object):
     """
@@ -239,6 +239,8 @@ for name, directory in iteritems(directoryAdditions):
         try:
             definedDirectory = TEMPLATE_PATH + templateName + "/" + name
             if os.path.isdir(definedDirectory):
+                if os.path.isdir(directory):
+                    shutil.rmtree(directory)
                 shutil.copytree(definedDirectory, directory)
             else:
                 os.makedirs(directory)
@@ -278,7 +280,10 @@ for source, destination in iteritems(fileAdditions):
         if not os.path.exists(outDirectory):
             os.makedirs(outDirectory)
 
-        inFileContent = inFile.read() % substitutions
+        inFileContent = inFile.read()
+        for substitutionName, substitionValue in substitutions.iteritems():
+            inFileContent = inFileContent.replace("%(" + substitutionName + ")s", substitionValue)
+
         if mode == "APPEND":
             with open(outFileName, 'a') as outFile:
                 outFile.write(inFileContent)
