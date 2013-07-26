@@ -47,7 +47,7 @@ TEMPLATE_DESCRIPTION = """
          %(description)s
 """
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 class AbstractRepository(object):
     """
@@ -155,7 +155,29 @@ elif command == "help":
     print("instantly share [template name]")
     print("\t Share a template you have created with others online")
     print("\t Must register your google account with http://instantly.pl/ to do this")
+    print("instantly install [template directory]")
+    print("\t Installs an instant_template directory from the local file system into your personal collection")
+    print("\t of instant_templates")
     sys.exit(0)
+elif command == "install":
+    templateName = sys.argv[2]
+    if len(sys.argv) > 3:
+        templateDirectory = sys.argv[3]
+    else:
+        templateDirectory = templateName
+    try:
+        installationDirectory = TEMPLATE_PATH + templateName + "/"
+        if os.path.isdir(installationDirectory):
+            shutil.rmtree(installationDirectory)
+        shutil.copytree(templateDirectory, installationDirectory)
+    except:
+        print("An error occurred attempting to install the template %s" % templateDirectory)
+        sys.exit(1)
+        
+    print("%(name)s has been installed as a local template. Run 'instantly %(name)s' to expand it." % \
+          {"name":templateName})
+    sys.exit(0)
+    
 elif command == "drop":
     templateName = sys.argv[2]
     if raw_input("Are you sure you want to delete %s (y/n)? " % templateName).lower() == "y":
