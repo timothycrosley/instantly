@@ -2,8 +2,6 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from pies import *
-
 try:
     from setuptools import setup
 except ImportError:
