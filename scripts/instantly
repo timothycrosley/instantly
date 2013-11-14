@@ -36,7 +36,7 @@ from subprocess import Popen
 
 import InstantlyFiles
 from configobj import ConfigObj
-from pies import *
+from pies.overrides import *
 from Rest import GOOGLE, RestClient
 from WebElements.MultiplePythonSupport import *
 
@@ -50,7 +50,7 @@ TEMPLATE_DESCRIPTION = """
          %(description)s
 """
 
-__version__ = "0.8.0"
+__version__ = "0.8.3"
 
 class AbstractRepository(object):
     """
@@ -176,11 +176,11 @@ elif command == "install":
     except:
         print("An error occurred attempting to install the template %s" % templateDirectory)
         sys.exit(1)
-        
+
     print("%(name)s has been installed as a local template. Run 'instantly %(name)s' to expand it." % \
           {"name":templateName})
     sys.exit(0)
-    
+
 elif command == "drop":
     templateName = sys.argv[2]
     if raw_input("Are you sure you want to delete %s (y/n)? " % templateName).lower() == "y":
@@ -247,14 +247,14 @@ template = ConfigObj(TEMPLATE_PATH + templateName + "/definition", interpolation
 
 substitutions = {'InstantTemplates':TEMPLATE_PATH}
 substitutions.update(os.environ)
-for argument, argumentDefinition in iteritems(template.get('Arguments', {})):
+for argument, argumentDefinition in itemsview(template.get('Arguments', {})):
     if extraInputs:
         substitutions[argument] = extraInputs.pop(0)
     else:
         substitutions[argument] = raw_input(argumentDefinition['label'] + " ")
 
 directoryAdditions = template.get('DirectoryAdditions', {})
-for name, directory in iteritems(directoryAdditions):
+for name, directory in itemsview(directoryAdditions):
     directory = directory % substitutions
     substitutions[name] = directory
     if undo:
@@ -275,7 +275,7 @@ for name, directory in iteritems(directoryAdditions):
         repository.addDirectory(directory)
 
 fileDeletions = template.get('FileDeletions', {})
-for name, fileName in iteritems(fileDeletions):
+for name, fileName in itemsview(fileDeletions):
     fileName = fileName % substitutions
     substitutions[name] = fileName
     if undo:
@@ -286,14 +286,14 @@ for name, fileName in iteritems(fileDeletions):
 
 fileAdditions = template.get('FileAdditions', {})
 if undo:
-    for source, fileAddition in iteritems(fileAdditions):
+    for source, fileAddition in itemsview(fileAdditions):
         fileName = fileAddition % substitutions
         if os.path.exists(fileName):
             os.remove(fileName)
         repository.remove(fileName)
     sys.exit(0)
 
-for source, destination in iteritems(fileAdditions):
+for source, destination in itemsview(fileAdditions):
     with open(TEMPLATE_PATH + templateName + "/" + source) as inFile:
         if not "::" in destination:
             (outFileName, mode) = (destination % substitutions, "")
@@ -306,7 +306,7 @@ for source, destination in iteritems(fileAdditions):
             os.makedirs(outDirectory)
 
         inFileContent = inFile.read()
-        for substitutionName, substitionValue in substitutions.iteritems():
+        for substitutionName, substitionValue in substitutions.items():
             inFileContent = inFileContent.replace("%(" + substitutionName + ")s", substitionValue)
 
         if mode == "APPEND":
