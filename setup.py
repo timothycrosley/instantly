@@ -15,7 +15,7 @@ setup(name='Instantly',
       license = "MIT",
       scripts=['scripts/instantly',],
       requires=['configobj', 'rest', 'pies'],
-      install_requires=['configobj', 'rest', 'pies>=2.0.0'],
+      install_requires=['configobj', 'rest', 'pies>=2.6.1'],
       package_data={'InstantlyFiles': ["instant_templates/create_instant_template/*"]},
       include_package_data=True,
       packages=['InstantlyFiles',],)
