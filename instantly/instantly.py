@@ -23,11 +23,13 @@ OTHER DEALINGS IN THE SOFTWARE.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
+import shutil
 
 from pies import *
 
 from . import settings
 from .service import Client
+from .template import LocalTemplate
 
 DEFAULT_TEMPLATE_PATH = os.environ.get("INSTANT_TEMPLATES_PATH", os.path.expanduser('~') + "/.instant_templates/")
 
@@ -39,7 +41,27 @@ class Instantly(object):
         self.settings.update(setting_overrides)
         self.client = Client(self.settings['path'])
 
+    def _index_template(self, template_path):
+        self.templates[template_path] = LocalTemplate(template_path)
+
     @property
     def installed_templates(self):
-        return self.settings.templates
+        return sorted(self.settings.templates.values(), key=lambda template: template.name)
 
+    def install(self, template_name):
+        self.remove(os.path.basename(template_name))
+        if not os.path.isabs(template_name):
+            template_name = os.path.join(self.run_path, template_name)
+
+        if os.path.isdir(template_name):
+            try:
+                shutil.copytree(template_name, self.settings.path)
+            except Exception:
+                return False
+
+    def remove(self, template_name):
+        template = settings.templates.pop(os.path.join(self.settings.path, template_name), None)
+        if not template:
+            return False
+
+        return template.delete()

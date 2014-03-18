@@ -23,6 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
+import shutil
 
 from configobj import ConfigObj
 from pies.overrides import *
@@ -30,11 +31,11 @@ from pies.overrides import *
 
 class Template(object):
     __slots__ = ('name', 'label', 'description', 'author', 'license', 'programming_language', 'language',
-                 'last_updated', 'arguments', 'directory_additions', 'file_additions', 'extra_data')
+                 'last_updated', 'arguments', 'directory_additions', 'file_additions', 'scripts', 'extra_data')
 
     def __init__(self, name, label, description, author, programming_language="Python", language="English",
                  last_updated=None, license=None, arguments=None, directory_additions=None, file_additions=None,
-                 **extra_data):
+                 scripts=None, **extra_data):
         self.name = name
         self.label = label
         self.description
@@ -46,6 +47,7 @@ class Template(object):
         self.arguments = arguments or {}
         self.directory_additions = directory_additions or {}
         self.file_additions = file_additions or {}
+        self.scripts = scripts or {}
         self.extra_data = extra_data
 
     def __str__(self):
@@ -71,3 +73,11 @@ class LocalTemplate(Template):
             data['label'] = data['name'].title()
 
         Template.__init__(**data)
+
+    def delete(self):
+        try:
+            shutil.rmtree(self.location)
+        except Exception:
+            return False
+
+        return True

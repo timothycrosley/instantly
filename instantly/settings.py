@@ -79,7 +79,7 @@ def _update_settings_with_config(path, name, default, sections, computed_setting
     for template_name in glob(os.path.join(templates_directory, '*')):
         if os.path.isdir(template_name):
             templates.append(LocalTemplate(os.path.basename(template_name)))
-    templates.sort(key=lambda item: item.name)
+    computed_settings['templates'] = templates
 
     settings_file = os.path.join(templates_directory, "settings")
     if os.path.exists(settings_file):
