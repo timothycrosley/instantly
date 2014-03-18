@@ -44,6 +44,19 @@ def from_path(path):
     return computed_settings
 
 
+def creating_settings(directory):
+    first_template = os.path.join(templates_directory, 'create_instant_template')
+    os.path.makedirs(first_template)
+    settings = ConfigObj(os.path.join(templates_directory, "settings"))
+    settings.update(default)
+    settings.pop('templates', '')
+    settings.write()
+    with open(os.path.join(first_template, 'definition'), 'w') as definition_file:
+        definition_file.write(_first_template.DEFINITION)
+    with open(os.path.join(first_template, 'new_template'), 'w') as new_template_file:
+        definition_file.write(_first_template.NEW_TEMPLATE)
+
+
 def _update_settings_with_config(path, name, default, sections, computed_settings):
     templates_directory = default and os.path.expanduser(default)
     tries = 0
@@ -58,16 +71,7 @@ def _update_settings_with_config(path, name, default, sections, computed_setting
         tries += 1
 
     if not os.path.isdir(templates_directory):
-        first_template = os.path.join(templates_directory, 'create_instant_template')
-        os.path.makedirs(first_template)
-        settings = ConfigObj(os.path.join(templates_directory, "settings"))
-        settings.update(default)
-        settings.pop('templates', '')
-        settings.write()
-        with open(os.path.join(first_template, 'definition'), 'w') as definition_file:
-            definition_file.write(_first_template.DEFINITION)
-        with open(os.path.join(first_template, 'new_template'), 'w') as new_template_file:
-            definition_file.write(_first_template.NEW_TEMPLATE)
+        create_settings(templates_directory)
 
     computed_settings['path'] = templates_directory
 
