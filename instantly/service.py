@@ -20,11 +20,14 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 """
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import os
 import tarfile
 
 import requests
 from configobj import ConfigObj
+from pies import *
 
 BASE_URL = "www.instantly.pl"
 URL = "http://" + BASE_URL + "/api/"
@@ -33,7 +36,7 @@ URL = "http://" + BASE_URL + "/api/"
 class Client(object):
     __slots__ = ('_token', '_session', 'template_directory')
 
-    def __init__(self, template_directory=None):
+    def __init__(self, template_directory):
         self._session = None
         self.template_directory = template_directory
 
@@ -82,20 +85,15 @@ class Client(object):
     def find(self, search_term):
         return self.without_authentication("find/%s" % search_term).json
 
-    def grab(self, template_name, template_path):
+    def grab(self, template_name):
         template = self.without_authentication("InstantTemplate/%s" % template_name)
         if not template:
             return False
 
-        tar_path = template_path + template_name + ".tar.gz"
+        tar_path = self.template_path + template_name + ".tar.gz"
         with open(tar_path, "wb") as tar:
             tar.write(template['template'].decode("base64").decode("zlib"))
         tarfile.open(tar_path).extractall(TEMPLATE_PATH)
         os.remove(tar_path)
 
         return True
-
-
-
-
-
