@@ -35,10 +35,9 @@ from glob import glob
 from subprocess import Popen
 
 import InstantlyFiles
+import requests
 from configobj import ConfigObj
 from pies.overrides import *
-from Rest import GOOGLE, RestClient
-from WebElements.MultiplePythonSupport import *
 
 TEMPLATE_PATH = os.environ.get("INSTANT_TEMPLATES_PATH", os.path.expanduser('~') + "/.instant_templates/")
 TEMPLATE_DESCRIPTION = """
@@ -51,59 +50,6 @@ TEMPLATE_DESCRIPTION = """
 """
 
 __version__ = "0.8.5"
-
-class AbstractRepository(object):
-    """
-        Defines the abstract concept of a repository for instantly to interact with
-    """
-    def addFile(self, name):
-        pass
-
-    def addDirectory(self, name):
-        pass
-
-    def remove(self, name):
-        pass
-
-    def revert(self, name):
-        pass
-
-
-class SVN(AbstractRepository):
-    """
-        Defines instantly interaction with a SVN repository
-    """
-    def addFile(self, name):
-        Popen('svn add ' + name, shell=True).wait()
-
-    def addDirectory(self, name):
-        Popen('svn add ' + name, shell=True).wait()
-        Popen("svn propset svn:ignore  '*.pyc *._bak *.bak' " + name, shell=True).wait()
-
-    def remove(self, name):
-        Popen('svn rm ' + name + " --force", shell=True).wait()
-
-    def revert(self, name):
-        Popen('svn revert ' + name, shell=True).wait()
-
-
-class GIT(AbstractRepository):
-    """
-        Defines instantly interaction with a GIT repository
-    """
-    def addFile(self, name):
-        Popen('git add ' + name, shell=True).wait()
-
-    def add(self, name):
-        Popen('git add ' + name, shell=True).wait()
-
-    def remove(self, name):
-        Popen('git rm ' + name + " --force", shell=True).wait()
-
-    def revert(self, name):
-        Popen('git checkout ' + name, shell=True).wait()
-
-repository = {'':AbstractRepository, 'SVN':SVN, 'GIT':GIT}[os.environ.get("INSTANT_REPOSITORY_MODE", '')]()
 
 if not os.path.exists(TEMPLATE_PATH):
     copy_tree(InstantlyFiles.__path__[0] + "/instant_templates/", TEMPLATE_PATH)
@@ -259,7 +205,6 @@ for name, directory in itemsview(directoryAdditions):
     substitutions[name] = directory
     if undo:
         shutil.rmtree(directory)
-        repository.remove(directory)
     else:
         try:
             definedDirectory = TEMPLATE_PATH + templateName + "/" + name
@@ -272,25 +217,12 @@ for name, directory in itemsview(directoryAdditions):
         except:
             pass
 
-        repository.addDirectory(directory)
-
-fileDeletions = template.get('FileDeletions', {})
-for name, fileName in itemsview(fileDeletions):
-    fileName = fileName % substitutions
-    substitutions[name] = fileName
-    if undo:
-        repository.revert(fileName)
-    else:
-        os.remove(fileName)
-        repository.remove(fileName)
-
 fileAdditions = template.get('FileAdditions', {})
 if undo:
     for source, fileAddition in itemsview(fileAdditions):
         fileName = fileAddition % substitutions
         if os.path.exists(fileName):
             os.remove(fileName)
-        repository.remove(fileName)
     sys.exit(0)
 
 for source, destination in itemsview(fileAdditions):
@@ -333,7 +265,6 @@ for source, destination in itemsview(fileAdditions):
         else:
             with open(outFileName, 'w') as outFile:
                 outFile.write(inFileContent)
-                repository.addFile(outFileName)
 
 scripts = template.get('Scripts', {})
 onfinish = scripts.get('onfinish', [])
