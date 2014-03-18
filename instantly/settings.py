@@ -44,7 +44,7 @@ def from_path(path):
     return computed_settings
 
 
-def creating_settings(directory):
+def create(directory):
     first_template = os.path.join(templates_directory, 'create_instant_template')
     os.path.makedirs(first_template)
     settings = ConfigObj(os.path.join(templates_directory, "settings"))
@@ -71,7 +71,7 @@ def _update_settings_with_config(path, name, default, sections, computed_setting
         tries += 1
 
     if not os.path.isdir(templates_directory):
-        create_settings(templates_directory)
+        create(templates_directory)
 
     computed_settings['path'] = templates_directory
 
