@@ -32,11 +32,12 @@ from pies.overrides import *
 
 class Template(object):
     __slots__ = ('name', 'label', 'description', 'author', 'license', 'programming_language', 'language',
-                 'last_updated', 'arguments', 'directory_additions', 'file_additions', 'scripts', 'extra_data')
+                 'last_updated', 'arguments', 'directory_additions', 'file_additions', 'scripts', 'finish_message',
+                 'extra_data')
 
     def __init__(self, name, label, description, author, programming_language="N/A", language="English",
                  last_updated=None, license=None, arguments=None, directory_additions=None, file_additions=None,
-                 scripts=None, **extra_data):
+                 scripts=None, finish_message="", **extra_data):
         if last_updated:
              last_updated = datetime.strptime(last_updated, "%Y-%m-%d %H:%M")
 
@@ -52,6 +53,7 @@ class Template(object):
         self.directory_additions = directory_additions or {}
         self.file_additions = file_additions or {}
         self.scripts = scripts or {}
+        self.finish_message = finish_message
         self.extra_data = extra_data
 
     def __str__(self):

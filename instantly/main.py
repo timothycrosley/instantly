@@ -110,6 +110,9 @@ def main():
             print("       but you could always create one ;)")
             sys.exit(1)
 
+        print("Expanding the following template:")
+        print(template)
+        print("")
         arguments = {}
         for argument, argument_definition in itemsview(template.arguments):
             if extra_inputs:
@@ -145,9 +148,10 @@ def main():
                             value = ""
                 arguments['argument'] = value
 
-        instantly.expand(template_name, arguments)
-
-
+        if instantly.expand(template_name, arguments):
+            print("Successfully ran '{0}'!".format(template_name))
+            if template.finish_message:
+                print(template.finish_message)
 
 if __name__ == "__main__":
     main()
