@@ -19,10 +19,10 @@ Installing instantly
 
 Installing instantly is as simple as:
 
-    pip install instantly
+    pip install instantpl
 
 or if you prefer
 
-    easy_install instantly
+    easy_install instantpl
 
 

@@ -11,7 +11,7 @@ try:
 except (IOError, ImportError, OSError, RuntimeError):
    readme = ''
 
-setup(name='instantly',
+setup(name='instantpl',
       version='0.9.0',
       description='A tool which allows you to create templates that can be expanded into full projects or stubs '
                   'instantly.',
