@@ -35,7 +35,7 @@ class Template(object):
                  'last_updated', 'arguments', 'directory_additions', 'file_additions', 'scripts', 'finish_message',
                  'extra_data')
 
-    def __init__(self, name, label, description, author, programming_language="N/A", language="English",
+    def __init__(self, name, label="", description="", author="", programming_language="N/A", language="English",
                  last_updated=None, license=None, arguments=None, directory_additions=None, file_additions=None,
                  scripts=None, finish_message="", **extra_data):
         if last_updated:
@@ -43,7 +43,7 @@ class Template(object):
 
         self.name = name
         self.label = label
-        self.description
+        self.description = description
         self.author = author
         self.license = license
         self.programming_language = programming_language
@@ -56,6 +56,9 @@ class Template(object):
         self.finish_message = finish_message
         self.extra_data = extra_data
 
+    def __repr__(self):
+        return self.name
+    
     def __str__(self):
         return ("\n"
                 "{name}\n"
@@ -83,7 +86,7 @@ class LocalTemplate(Template):
         data['file_additions'] = data.pop('FileAdditions', {})
         data['arguments'] = data.pop('Arguments', {})
 
-        Template.__init__(**data)
+        Template.__init__(self, **data)
 
     def delete(self):
         try:
@@ -190,4 +193,4 @@ class RemoteTemplate(Template):
 
     def __init__(self, template):
         template['last_updated'] = template.pop('lastUpdated', '')
-        Template.__init__(**template)
+        Template.__init__(self, **template)

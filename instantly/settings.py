@@ -22,13 +22,16 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import os
+from glob import glob
+
 from configobj import ConfigObj
 from pies.collections import OrderedDict
 from pies.functools import lru_cache
 from pies.overrides import *
 
-from .template import LocalTemplate
 from . import _first_template
+from .template import LocalTemplate
 
 MAX_CONFIG_SEARCH_DEPTH = 25 # The number of parent directories instantly will look for a config file within
 
@@ -76,10 +79,10 @@ def _update_settings_with_config(path, name, default, sections, computed_setting
 
     computed_settings['path'] = templates_directory
 
-    templates = []
+    templates = {}
     for template_name in glob(os.path.join(templates_directory, '*')):
         if os.path.isdir(template_name):
-            templates.append(LocalTemplate(os.path.basename(template_name)))
+            templates[template_name] = LocalTemplate(template_name)
     computed_settings['templates'] = templates
 
     settings_file = os.path.join(templates_directory, "settings")

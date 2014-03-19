@@ -37,7 +37,7 @@ def main():
         print("       type instantly help for full instructions.")
         print("")
         print("Installed Templates:")
-        print("\t" + str(templates))
+        print("\t" + str(instantly.installed_templates))
         sys.exit(1)
 
     command = sys.argv[1]
