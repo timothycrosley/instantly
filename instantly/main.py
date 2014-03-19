@@ -22,7 +22,11 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 import sys
 
+from pies.overrides import *
+
 from .instantly import Instantly
+
+TYPE_MAP = {'string': str, 'str': str, 'int': int, 'bool': bool}
 
 
 def main():
@@ -37,7 +41,8 @@ def main():
         sys.exit(1)
 
     command = sys.argv[1]
-    extraInputs = sys.argv[2:]
+    template_name = sys.argv[2:3] and sys.argv[2] or ""
+    extra_inputs = sys.argv[2:]
     if command == "help":
         print("Instantly Commands")
         print("")
@@ -63,58 +68,85 @@ def main():
               "or online repository into your personal collection of templates")
         sys.exit(0)
     elif command == "uninstall":
-        template_name = sys.argv[2]
+
         if raw_input("Are you sure you want to delete %s (y/n)? " % template_name).lower() in ("y", "yes"):
             if instantly.uninstall(template_name):
                 print("Successfully removed %s from local templates" % template_name)
-        sys.exit(0)
+                sys.exit(0)
+            else:
+                sys.exit(1)
     elif command == "share":
-        template_name = sys.argv[2]
-        template = ConfigObj(TEMPLATE_PATH + template_name + "/definition", interpolation=False)
-        client = createClient()
-        tarPath = TEMPLATE_PATH + template_name + ".tar.gz"
-        with tarfile.open(tarPath, "w") as tar:
-            tar.dereference = True
-            tar.add(TEMPLATE_PATH + template_name, arcname=template_name)
-        with open(tarPath, 'rb') as tar:
-            encodedTemplate = tar.read().encode("zlib").encode("base64")
-
-        client.post("InstantTemplate", {"license":template["Info"].get("license", ""),
-                                        "name":template_name, "description":template["Info"].get("description", ""),
-                                        "template":encodedTemplate})
-        os.remove(tarPath)
-        print("Successfully shared %s, thanks for helping to expand the number of instant templates!" % template_name)
-        sys.exit(0)
+        if instantly.share(template_name):
+            print("Successfully shared %s, thanks for helping to expand the number of instant templates!" % template_name)
+            sys.exit(0)
+        else:
+            sys.exit(1)
     elif command == "find":
-        searchTerm = sys.argv[2]
-        results = createClient(authenticated=False).get("find/%s" % searchTerm)
+        results = instantly.find(template_name)
         if not results:
-            print("Sorry: no templates have been shared that match the search term '%s'," % searchTerm)
+            print("Sorry: no templates have been shared that match the search term '%s'," % template_name)
             print("       but you could always add one ;)")
             sys.exit(0)
 
         print("Instantly found the following templates:")
         for result in results:
-            print(TEMPLATE_DESCRIPTION % result)
+            print(result)
 
-        print(" To install one of these templates run: instantly grab [template_name]")
+        print(" To install one of these templates run: instantly install [template_name]")
         sys.exit(0)
-    elif command == "grab":
-        template_name = sys.argv[2]
-        template = createClient(authenticated=False).get("InstantTemplate/%s" % template_name)
-        if not template:
+    elif command == "install":
+        if instantly.install(template_name):
+            print("%(name)s has been installed as a local template. Run 'instantly %(name)s' to expand it." % \
+                  {"name":template_name})
+            sys.exit(0)
+        else:
             print("Sorry: no one has thought of a way to instantly '%s'," % searchTerm)
             print("       but you could always create one ;)")
             sys.exit(0)
-        tarPath = TEMPLATE_PATH + template_name + ".tar.gz"
-        with open(tarPath, "wb") as tar:
-            tar.write(template['template'].decode("base64").decode("zlib"))
-        tarfile.open(tarPath).extractall(TEMPLATE_PATH)
-        os.remove(tarPath)
+    else:
+        template = instantly.get_template(template_name)
+        if not template_name:
+            print("Sorry: no one has thought of a way to instantly '%s'," % searchTerm)
+            print("       but you could always create one ;)")
+            sys.exit(1)
 
-        print("%(name)s has been installed as a local template. Run 'instantly %(name)s' to expand it." % \
-            {"name":template_name})
-        sys.exit(0)
+        arguments = {}
+        for argument, argument_definition in itemsview(template.arguments):
+            if extra_inputs:
+                substitutions[argument] = extra_inputs.pop(0)
+            else:
+                argument_type = argument_definition.get('type', 'string')
+                default = instantly.settings['defaults'].get(argument, '') or argument_definition.get('default', '')
+                help_text = argument_definition.get('help_text')
+                if help_text:
+                    print("Help Text: {0}".format(help_text))
+
+                prompt = argument_definition.get('prompt', '')
+                if default:
+                    prompt += " [Default: {0}]" + default
+                if argument_type == "bool":
+                    prompt += " (y/n)"
+                prompt += ": "
+
+                value = ""
+                while value == "":
+                    value = input(prompt)
+                    if argument_type == "bool":
+                        if value.lower() in ("y", "yes"):
+                            value = True
+                        elif value.lower() in ("n", "no"):
+                            value = False
+                        else:
+                            value = ""
+                    elif argument_type == "int":
+                        if value.isdigit():
+                            value = int(value)
+                        else:
+                            value = ""
+                arguments['argument'] = value
+
+        instantly.expand(template_name, arguments)
+
 
 
 if __name__ == "__main__":

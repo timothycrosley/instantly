@@ -28,17 +28,17 @@ license = "GPLV2"
 
 [Arguments]
     [[label]]
-    label = "Label:"
+    prompt = "Label"
     type = "string"
-    description = "The displayed label for you new instant template [ie: Instant Template]"
+    help_text = "The displayed label for you new instant template [ie: Instant Template]"
     [[name]]
-    label = "Name:"
+    prompt = "Name"
     type = "string"
-    description = "The action name of your template used to expand from the console [ie: create_instant_template]"
+    help_text = "The action name of your template used to expand from the console [ie: create_instant_template]"
     [[description]]
-    label = "Description:"
+    prompt = "Description"
     type = "string"
-    description = "The displayed description for your new instant template [ie: Adds a new instant template...]"
+    help_text = "The displayed description for your new instant template [ie: Adds a new instant template...]"
 
 [DirectoryAdditions]
 new_template_directory = "{INSTANTLY::InstantTemplates}/{INSTANTLY::name}/"
@@ -56,7 +56,7 @@ license = "GPLV2"
 [Arguments]
 # Put inputs you want to gather from the user, along with the explanation presented to the user here. IE:
 #      [[name]]
-#       label = "Name:"
+#       prompt = "Name"
 #       type = "string"
 #       default = "hi"
 

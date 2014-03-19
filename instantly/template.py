@@ -107,7 +107,7 @@ class LocalTemplate(Template):
             print("This script wants to perform the following command line actions:")
             print("    -" + "\n    -".join(beforerun))
             print("")
-            if raw_input("Is this okay (Y/N)?").lower() in (('y', 'yes')):
+            if input("Is this okay (Y/N)?").lower() in (('y', 'yes')):
                 for script in beforerun:
                     Popen(self.make_substitutions(script, substitutions), shell=True).wait()
 
@@ -176,7 +176,7 @@ class LocalTemplate(Template):
             print("This script wants to perform the following command line actions:")
             print("    -" + "\n    -".join(onfinish))
             print("")
-            if raw_input("Is this okay (Y/N)?").lower() in (('y', 'yes')):
+            if input("Is this okay (Y/N)?").lower() in (('y', 'yes')):
                 for script in onfinish:
                     Popen(self.make_substitutions(script, substitutions), shell=True).wait()
 
