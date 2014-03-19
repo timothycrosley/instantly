@@ -14,8 +14,6 @@ It currently cleanly supports Python 2.6 - 3.4 using pies (https://github.com/ti
     instantly create_my_next_big_thing
 
 
-                    ^ Assuming 'create_my_next_big_thing' is a template that you or anyone online has created and shared, that plus answering a few prompts is all that's necessary.
-
 Installing instantly
 ===================
 
