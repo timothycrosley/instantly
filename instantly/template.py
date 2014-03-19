@@ -33,7 +33,7 @@ class Template(object):
     __slots__ = ('name', 'label', 'description', 'author', 'license', 'programming_language', 'language',
                  'last_updated', 'arguments', 'directory_additions', 'file_additions', 'scripts', 'extra_data')
 
-    def __init__(self, name, label, description, author, programming_language="Python", language="English",
+    def __init__(self, name, label, description, author, programming_language="N/A", language="English",
                  last_updated=None, license=None, arguments=None, directory_additions=None, file_additions=None,
                  scripts=None, **extra_data):
         self.name = name
@@ -72,6 +72,11 @@ class LocalTemplate(Template):
         if not data.get('label', ''):
             data['label'] = data['name'].title()
 
+        data['scripts'] = data.pop('Scripts', {})
+        data['directory_additions'] = data.pop('DirectoryAdditions', {})
+        data['file_additions'] = data.pop('FileAdditions', {})
+        data['arguments'] = data.pop('Arguments', {})
+
         Template.__init__(**data)
 
     def delete(self):
@@ -81,3 +86,102 @@ class LocalTemplate(Template):
             return False
 
         return True
+
+    def make_substitutions(self, string, substitutions):
+        for name, values in substitutions.items():
+            string = string.replace("{INSTANTLY::" + name + "}", value)
+
+        return string
+
+    def expand(self, path, arguments):
+        substitutions = dict(InstantTemplates=os.path.dirname(self.location.strip("/")))
+        substitutions.update(os.environ)
+        substitutions.update(arguments)
+
+        beforerun = self.scripts.get('beforerun', [])
+        if beforerun:
+            print("This script wants to perform the following command line actions:")
+            print("    -" + "\n    -".join(beforerun))
+            print("")
+            if raw_input("Is this okay (Y/N)?").lower() in (('y', 'yes')):
+                for script in beforerun:
+                    Popen(self.make_substitutions(script, substitutions), shell=True).wait()
+
+        for name, directory in itemsview(self.directory_additions):
+            directory = self.make_substitutions(directory, substitutions)
+            if not os.isabs(directory):
+                directory = os.path.join(path, directory)
+            substitutions[name] = directory
+            try:
+                defined_directory = os.path.join(self.location, name)
+                if os.path.isdir(defined_directory):
+                    if os.path.isdir(directory):
+                        shutil.rmtree(directory)
+                    shutil.copytree(defined_directory, directory)
+                else:
+                    os.makedirs(directory)
+            except:
+                pass
+
+        for source, destination in itemsview(self.file_additions):
+            with open(os.path.join(self.location, source)) as in_file:
+                if not "::" in destination:
+                    (out_file_name, mode) = (self.make_substitutions(destination, substitutions), "")
+                else:
+                    (out_file_name, mode) = self.make_substitutions(destination, substitutions).split("::")
+                if not os.path.isabs(out_file_name):
+                    out_file_name = os.path.join(path, out_file_name)
+                substitutions[source] = out_file_name
+
+                out_directory = os.path.dirname(out_file_name)
+                if not os.path.exists(out_directory):
+                    os.makedirs(out_directory)
+
+                in_file_content = in_file.read()
+                for substitutionName, substitionValue in substitutions.items():
+                    in_file_content = in_file_content.replace("{{INSTANTLY::" + substitutionName + "}}",
+                                                              substitionValue)
+
+                if mode == "APPEND":
+                    with open(out_file_name, 'a') as outFile:
+                        outFile.write(in_file_content)
+                elif mode.startswith("REPLACE"):
+                    toReplace = mode[8:]
+                    with open(out_file_name, 'r') as currentFile:
+                        currentFileContents = currentFile.read()
+                        with open(out_file_name, 'w') as outFile:
+                            outFile.write(currentFileContents.replace(toReplace, in_file_content))
+                elif mode.startswith("BEFORE"):
+                    placement = mode[7:]
+                    with open(out_file_name, 'r') as currentFile:
+                        currentFileContents = currentFile.read()
+                        with open(out_file_name, 'w') as outFile:
+                            outFile.write(currentFileContents.replace(placement, in_file_content + "\n" + placement))
+                elif mode.startswith("AFTER"):
+                    placement = mode[6:]
+                    with open(out_file_name, 'r') as currentFile:
+                        currentFileContents = currentFile.read()
+                        with open(out_file_name, 'w') as outFile:
+                            outFile.write(currentFileContents.replace(placement, placement + "\n" + in_file_content))
+                else:
+                    with open(out_file_name, 'w') as outFile:
+                        outFile.write(in_file_content)
+
+        onfinish = scripts.get('onfinish', [])
+        if onfinish:
+            print("This script wants to perform the following command line actions:")
+            print("    -" + "\n    -".join(onfinish))
+            print("")
+            if raw_input("Is this okay (Y/N)?").lower() in (('y', 'yes')):
+                for script in onfinish:
+                    Popen(self.make_substitutions(script, substitutions), shell=True).wait()
+
+        return True
+
+
+class RemoteTemplate(Template):
+    __slots__ = ()
+
+    def __init__(self, template):
+        template['last_updated'] = template.pop('lastUpdated', '')
+        Template.__init__(**template)
