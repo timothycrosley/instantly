@@ -104,3 +104,19 @@ class Instantly(object):
 
     def expand(self, template_name, arguments):
         return self._template(template_name).expand(self.run_path, arguments)
+
+    def get_template(self, template_name):
+        local_template = self._template(template_name)
+        if local_template:
+            if self.settings['auto_update_templates']:
+                matching_template = self.find(template_name)
+                if matching_template:
+                    if matching_template.author == local_template.author and \
+                       matching_template.last_updated > local_template.last_updated:
+                        self.download(template_name)
+                        local_template = self._template(template_name)
+
+            return local_template
+        else:
+            self.install(template_name, look_remotely=self.settings['auto_update_templates'])
+            return self._template(template_name)

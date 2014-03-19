@@ -24,6 +24,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 import shutil
+from datetime import datetime
 
 from configobj import ConfigObj
 from pies.overrides import *
@@ -36,6 +37,9 @@ class Template(object):
     def __init__(self, name, label, description, author, programming_language="N/A", language="English",
                  last_updated=None, license=None, arguments=None, directory_additions=None, file_additions=None,
                  scripts=None, **extra_data):
+        if last_updated:
+             last_updated = datetime.strptime(last_updated, "%Y-%m-%d %H:%M")
+
         self.name = name
         self.label = label
         self.description
