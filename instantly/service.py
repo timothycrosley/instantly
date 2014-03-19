@@ -86,14 +86,14 @@ class Client(object):
         return True
 
     def find(self, search_term):
-        return self.without_authentication("find/%s" % search_term).json
+        return self.without_authentication("find/%s" % search_term).json()
 
     def grab(self, template_name):
         template = self.without_authentication("InstantTemplate/%s" % template_name)
         if not template:
             return None
 
-        return template.json
+        return template.json()
 
     def unshare(self, template_name):
         try:

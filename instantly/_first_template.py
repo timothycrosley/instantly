@@ -24,7 +24,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 DEFINITION = """label = "Instant Template"
 description = "Adds a new instant template to the list of options to be created."
 icon = "Add"
-license = "GPLV2"
+license = "MIT"
+author = "timothy.crosley@gmail.com"
 
 [Arguments]
     [[label]]

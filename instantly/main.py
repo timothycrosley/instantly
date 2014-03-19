@@ -70,7 +70,7 @@ def main():
         print("\t Will create an alternate settings / template directory within the current directory.")
         sys.exit(0)
     elif command == "uninstall":
-        if raw_input("Are you sure you want to delete %s (y/n)? " % template_name).lower() in ("y", "yes"):
+        if input("Are you sure you want to delete %s (y/n)? " % template_name).lower() in ("y", "yes"):
             if instantly.uninstall(template_name):
                 print("Successfully removed %s from local templates" % template_name)
                 sys.exit(0)
@@ -117,6 +117,7 @@ def main():
             print("       but you could always create one ;)")
             sys.exit(0)
     else:
+        template_name = command
         template = instantly.get_template(template_name)
         if not template_name:
             print("Sorry: no one has thought of a way to instantly '%s'," % searchTerm)
@@ -125,11 +126,11 @@ def main():
 
         print("Expanding the following template:")
         print(template)
-        print("")
         arguments = {}
         for argument, argument_definition in itemsview(template.arguments):
+            print("")
             if extra_inputs:
-                substitutions[argument] = extra_inputs.pop(0)
+                arguments[argument] = extra_inputs.pop(0)
             else:
                 argument_type = argument_definition.get('type', 'string')
                 default = instantly.settings['defaults'].get(argument, '') or argument_definition.get('default', '')
@@ -159,7 +160,7 @@ def main():
                             value = int(value)
                         else:
                             value = ""
-                arguments['argument'] = value
+                arguments[argument] = value
 
         if instantly.expand(template_name, arguments):
             print("Successfully ran '{0}'!".format(template_name))

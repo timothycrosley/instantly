@@ -24,6 +24,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 import shutil
+import tarfile
 
 from configobj import ConfigObj
 from pies import *
@@ -43,11 +44,11 @@ class Instantly(object):
         self.settings.update(setting_overrides)
         self.client = Client(self.settings['path'])
 
-    def _template(template_name):
-        return self.settings['templates'][os.path.join(self.settings['path'], template_name)]
+    def _template(self, template_name):
+        return self.settings['templates'].get(os.path.join(self.settings['path'], template_name), None)
 
     def _index_template(self, template_path):
-        self.templates[template_path] = LocalTemplate(template_path)
+        self.settings['templates'][template_path] = LocalTemplate(template_path)
 
     @property
     def installed_templates(self):
@@ -61,33 +62,36 @@ class Instantly(object):
         if os.path.isdir(template_name):
             try:
                 shutil.copytree(template_name, self.settings['path'])
+                self._index_template(os.path.join(self.settings['path'], template_name))
                 return True
             except Exception:
                 return False
 
-        return look_remotely and self.download(template_name)
+        return look_remotely and self.download(os.path.basename(template_name))
 
     def download(self, template_name, template=None):
-        template = template or client.grab(template_name)
+        template = template or self.client.grab(template_name)
         if not template or not template['template']:
             return False
 
         self.uninstall(os.path.basename(template_name))
-        install_location = os.path.join(self.settings['path'], templateName)
+        install_location = os.path.join(self.settings['path'], template_name)
         tar_file_name = install_location + ".tar.gz"
         with open(tar_file_name, "wb") as tar:
             tar.write(template['template'].decode("base64").decode("zlib"))
-        tarfile.open(tar_file_name).extractall(TEMPLATE_PATH)
+        tarfile.open(tar_file_name).extractall(self.settings['path'])
         os.remove(tar_file_name)
 
         definition = ConfigObj(os.path.join(install_location, 'definition'), interpolation=False)
         definition['last_updated'] = template.get('lastUpdated', '')
+        definition['author'] = template.get('author', '')
         definition.write()
+        self._index_template(install_location)
 
         return True
 
     def uninstall(self, template_name):
-        template = settings.templates.pop(os.path.join(self.settings['path'], template_name), None)
+        template = self.settings['templates'].pop(os.path.join(self.settings['path'], template_name), None)
         if not template:
             return False
 
@@ -114,8 +118,10 @@ class Instantly(object):
             if self.settings['auto_update_templates']:
                 matching_template = self.find(template_name)
                 if matching_template:
+                    matching_template = matching_template[0]
                     if matching_template.author == local_template.author and \
-                       matching_template.last_updated > local_template.last_updated:
+                       (not local_template.last_updated or
+                         matching_template.last_updated > local_template.last_updated):
                         self.download(template_name)
                         local_template = self._template(template_name)
 

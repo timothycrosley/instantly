@@ -25,6 +25,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import shutil
 from datetime import datetime
+from subprocess import Popen
 
 from configobj import ConfigObj
 from pies.overrides import *
@@ -58,7 +59,7 @@ class Template(object):
 
     def __repr__(self):
         return self.name
-    
+
     def __str__(self):
         return ("\n"
                 "{name}\n"
@@ -67,7 +68,7 @@ class Template(object):
                 "    Last Updated: {lastUpdated}\n"
                 "    Description:\n"
                 "       {description}\n"
-                "\n").format(name=self.name, author=self.author, license=self.license, lastUpdated=self.lastUpdated,
+                "\n").format(name=self.name, author=self.author, license=self.license, lastUpdated=self.last_updated,
                              description=self.description)
 
 
@@ -76,7 +77,7 @@ class LocalTemplate(Template):
 
     def __init__(self, location):
         self.location = location
-        data = ConfigObj(location, interpolation=False)
+        data = ConfigObj(os.path.join(location, 'definition'), interpolation=False)
         data['name'] = os.path.basename(location)
         if not data.get('label', ''):
             data['label'] = data['name'].title()
@@ -97,13 +98,14 @@ class LocalTemplate(Template):
         return True
 
     def make_substitutions(self, string, substitutions):
-        for name, values in substitutions.items():
-            string = string.replace("{INSTANTLY::" + name + "}", value)
+        for name, value in substitutions.items():
+            string = string.replace("{INSTANTLY::" + str(name) + "}", str(value))
 
         return string
 
     def expand(self, path, arguments):
-        substitutions = dict(InstantTemplates=os.path.dirname(self.location.strip("/")))
+        substitutions = dict(InstantTemplates="/" + os.path.dirname(self.location.strip("/")),
+                             current_date=datetime.now())
         substitutions.update(os.environ)
         substitutions.update(arguments)
 
@@ -112,13 +114,13 @@ class LocalTemplate(Template):
             print("This script wants to perform the following command line actions:")
             print("    -" + "\n    -".join(beforerun))
             print("")
-            if input("Is this okay (Y/N)?").lower() in (('y', 'yes')):
+            if input("Is this okay (Y/N)?").lower() in ('y', 'yes'):
                 for script in beforerun:
                     Popen(self.make_substitutions(script, substitutions), shell=True).wait()
 
         for name, directory in itemsview(self.directory_additions):
             directory = self.make_substitutions(directory, substitutions)
-            if not os.isabs(directory):
+            if not os.path.isabs(directory):
                 directory = os.path.join(path, directory)
             substitutions[name] = directory
             try:
@@ -134,10 +136,11 @@ class LocalTemplate(Template):
 
         for source, destination in itemsview(self.file_additions):
             with open(os.path.join(self.location, source)) as in_file:
+                destination = self.make_substitutions(destination, substitutions)
                 if not "::" in destination:
-                    (out_file_name, mode) = (self.make_substitutions(destination, substitutions), "")
+                    (out_file_name, mode) = (destination, "")
                 else:
-                    (out_file_name, mode) = self.make_substitutions(destination, substitutions).split("::")
+                    (out_file_name, mode) = destination.split("::")
                 if not os.path.isabs(out_file_name):
                     out_file_name = os.path.join(path, out_file_name)
                 substitutions[source] = out_file_name
@@ -148,42 +151,42 @@ class LocalTemplate(Template):
 
                 in_file_content = in_file.read()
                 for substitutionName, substitionValue in substitutions.items():
-                    in_file_content = in_file_content.replace("{{INSTANTLY::" + substitutionName + "}}",
-                                                              substitionValue)
+                    in_file_content = self.make_substitutions(in_file_content, substitutions)
 
                 if mode == "APPEND":
-                    with open(out_file_name, 'a') as outFile:
-                        outFile.write(in_file_content)
+                    with open(out_file_name, 'a') as out_file:
+                        out_file.write(in_file_content)
                 elif mode.startswith("REPLACE"):
                     toReplace = mode[8:]
                     with open(out_file_name, 'r') as currentFile:
                         currentFileContents = currentFile.read()
-                        with open(out_file_name, 'w') as outFile:
-                            outFile.write(currentFileContents.replace(toReplace, in_file_content))
+                        with open(out_file_name, 'w') as out_file:
+                            out_file.write(currentFileContents.replace(toReplace, in_file_content))
                 elif mode.startswith("BEFORE"):
                     placement = mode[7:]
                     with open(out_file_name, 'r') as currentFile:
                         currentFileContents = currentFile.read()
-                        with open(out_file_name, 'w') as outFile:
-                            outFile.write(currentFileContents.replace(placement, in_file_content + "\n" + placement))
+                        with open(out_file_name, 'w') as out_file:
+                            out_file.write(currentFileContents.replace(placement, in_file_content + "\n" + placement))
                 elif mode.startswith("AFTER"):
                     placement = mode[6:]
                     with open(out_file_name, 'r') as currentFile:
                         currentFileContents = currentFile.read()
-                        with open(out_file_name, 'w') as outFile:
-                            outFile.write(currentFileContents.replace(placement, placement + "\n" + in_file_content))
+                        with open(out_file_name, 'w') as out_file:
+                            out_file.write(currentFileContents.replace(placement, placement + "\n" + in_file_content))
                 else:
-                    with open(out_file_name, 'w') as outFile:
-                        outFile.write(in_file_content)
+                    with open(out_file_name, 'w') as out_file:
+                        out_file.write(in_file_content)
 
-        onfinish = scripts.get('onfinish', [])
+        onfinish = self.scripts.get('onfinish', [])
         if onfinish:
+            onfinish = [self.make_substitutions(item, substitutions) for item in onfinish]
             print("This script wants to perform the following command line actions:")
             print("    -" + "\n    -".join(onfinish))
             print("")
-            if input("Is this okay (Y/N)?").lower() in (('y', 'yes')):
+            if input("Is this okay (Y/N)?").lower() in ('y', 'yes'):
                 for script in onfinish:
-                    Popen(self.make_substitutions(script, substitutions), shell=True).wait()
+                    Popen(script, shell=True).wait()
 
         return True
 
