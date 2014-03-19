@@ -25,19 +25,21 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import shutil
 
+from configobj import ConfigObj
 from pies import *
 
 from . import settings
 from .service import Client
-from .template import LocalTemplate
+from .template import LocalTemplate, RemoteTemplate
 
 DEFAULT_TEMPLATE_PATH = os.environ.get("INSTANT_TEMPLATES_PATH", os.path.expanduser('~') + "/.instant_templates/")
 
+
 class Instantly(object):
 
-    def __init__(self, run_path=None, **setting_overrides):
+    def __init__(self, run_path=None, settings_search_path=None, **setting_overrides):
         self.run_path = run_path or os.getcwd()
-        self.settings = settings.from_path(self.run_path).copy()
+        self.settings = settings.from_path(settings_search_path or self.run_path).copy()
         self.settings.update(setting_overrides)
         self.client = Client(self.settings['path'])
 
@@ -48,8 +50,8 @@ class Instantly(object):
     def installed_templates(self):
         return sorted(self.settings.templates.values(), key=lambda template: template.name)
 
-    def install(self, template_name):
-        self.remove(os.path.basename(template_name))
+    def install(self, template_name, look_remotely=True):
+        self.uninstall(os.path.basename(template_name))
         if not os.path.isabs(template_name):
             template_name = os.path.join(self.run_path, template_name)
 
@@ -60,25 +62,39 @@ class Instantly(object):
             except Exception:
                 return False
 
-        return self.download(template_name)
+        return look_remotely and self.download(template_name)
 
-    def download(self, template_name):
-        template = client.grab(template_name)
-        if not template:
+    def download(self, template_name, template=None):
+        template = template or client.grab(template_name)
+        if not template or not template['template']:
             return False
 
-        self.remove(os.path.basename(template_name))
-        tar_file_name = os.path.join(self.settings.path, templateName + ".tar.gz")
+        self.uninstall(os.path.basename(template_name))
+        install_location = os.path.join(self.settings.path, templateName)
+        tar_file_name = install_location + ".tar.gz"
         with open(tar_file_name, "wb") as tar:
             tar.write(template['template'].decode("base64").decode("zlib"))
         tarfile.open(tar_file_name).extractall(TEMPLATE_PATH)
         os.remove(tar_file_name)
 
+        definition = ConfigObj(os.path.join(install_location, 'definition'), interpolation=False)
+        definition['last_updated'] = template.get('lastUpdated', '')
+        definition.write()
+
         return True
 
-    def remove(self, template_name):
+    def uninstall(self, template_name):
         template = settings.templates.pop(os.path.join(self.settings.path, template_name), None)
         if not template:
             return False
 
         return template.delete()
+
+    def find(self, keyword):
+        return [RemoteTemplate(template) for template in self.client.find(keyword)]
+
+    def share(self, template_name):
+        return self.client.share(template_name)
+
+    def unshare(self, template_name):
+        return self.client.unshare(template_name)
