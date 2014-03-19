@@ -47,7 +47,7 @@ def from_path(path):
 def create(directory):
     first_template = os.path.join(templates_directory, 'create_instant_template')
     os.path.makedirs(first_template)
-    settings = ConfigObj(os.path.join(templates_directory, "settings"))
+    settings = ConfigObj(os.path.join(templates_directory, "settings"), interpolation=False)
     settings.update(default)
     settings.pop('templates', '')
     settings.write()
