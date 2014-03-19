@@ -24,6 +24,7 @@ import sys
 
 from pies.overrides import *
 
+from . import __version__
 from .instantly import Instantly
 
 TYPE_MAP = {'string': str, 'str': str, 'int': int, 'bool': bool}
@@ -68,6 +69,8 @@ def main():
         print("\t Removes a template that you previously shared from the instantly online repository.")
         print("instantly create_settings [template directory]")
         print("\t Will create an alternate settings / template directory within the current directory.")
+        print("instantly version")
+        print("\t Will tell you the version of instantly you have installed.")
         sys.exit(0)
     elif command == "uninstall":
         if input("Are you sure you want to delete %s (y/n)? " % template_name).lower() in ("y", "yes"):
@@ -76,6 +79,9 @@ def main():
                 sys.exit(0)
             else:
                 sys.exit(1)
+    elif command == "version":
+        print("instantly v. {0}".format(__version__))
+        sys.exit(0)
     elif command == "share":
         if instantly.share(template_name):
             print("Successfully shared %s, thanks for helping to expand the number of instant templates!" % template_name)
@@ -113,14 +119,14 @@ def main():
                   {"name":template_name})
             sys.exit(0)
         else:
-            print("Sorry: no one has thought of a way to instantly '%s'," % searchTerm)
+            print("Sorry: no one has thought of a way to instantly '%s'," % template_name)
             print("       but you could always create one ;)")
             sys.exit(0)
     else:
         template_name = command
         template = instantly.get_template(template_name)
-        if not template_name:
-            print("Sorry: no one has thought of a way to instantly '%s'," % searchTerm)
+        if not template:
+            print("Sorry: no one has thought of a way to instantly '%s'," % template_name)
             print("       but you could always create one ;)")
             sys.exit(1)
 
