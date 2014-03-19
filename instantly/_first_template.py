@@ -29,31 +29,27 @@ license = "GPLV2"
 [Arguments]
     [[label]]
     label = "Label:"
-    type = "textfield"
-    validator = "All(NewValidators.Utf8(), validators.NotEmpty())"
+    type = "string"
     description = "The displayed label for you new instant template [ie: Instant Template]"
     [[name]]
     label = "Name:"
-    type = "textfield"
-    validator = "All(NewValidators.Utf8(), validators.NotEmpty())"
+    type = "string"
     description = "The action name of your template used to expand from the console [ie: create_instant_template]"
     [[description]]
     label = "Description:"
-    type = "textareafield"
-    validator = "All(NewValidators.Utf8(), validators.NotEmpty())"
+    type = "string"
     description = "The displayed description for your new instant template [ie: Adds a new instant template...]"
 
 [DirectoryAdditions]
-new_template_directory = "%(InstantTemplates)s/%(name)s/"
+new_template_directory = "{INSTANTLY::InstantTemplates}/{INSTANTLY::name}/"
 
 [FileAdditions]
-new_template = "%(new_template_directory)s/definition"
+new_template = "{INSTANTLY::new_template_directory}/definition"
 """
 
-NEW_TEMPLATE = """[Info]
-label = "%(label)s"
-name = "%(name)s"
-description = "%(description)s"
+NEW_TEMPLATE = """label = "{INSTANTLY::label}"
+name = "{INSTANTLY::name}"
+description = "{INSTANTLY::description}"
 icon = "Default"
 license = "GPLV2"
 
@@ -61,8 +57,8 @@ license = "GPLV2"
 # Put inputs you want to gather from the user, along with the explanation presented to the user here. IE:
 #      [[name]]
 #       label = "Name:"
-#       type = "textfield"
-#       validator = "All(NewValidators.Utf8(), validators.NotEmpty())"
+#       type = "string"
+#       default = "hi"
 
 [DirectoryAdditions]
 # Put directories you want created here. IE:
