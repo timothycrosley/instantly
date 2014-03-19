@@ -69,9 +69,6 @@ license = "GPLV2"
 #       NewDirectory = /creat/this/directory/
 # Hint: you can than add files to that directory in FileAddition reusing the definition: percent(NewDirectory)s
 
-[FileDeletions]
-# Put the location of files you want to remove here. IE:
-#       CheetahPage = /this/is/the/cheeta/page/location.tmpl
 
 [FileAdditions]
 # Put the source template files here along with there eventual destination. All source templates must be in the same
