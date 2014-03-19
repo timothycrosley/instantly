@@ -43,12 +43,15 @@ class Instantly(object):
         self.settings.update(setting_overrides)
         self.client = Client(self.settings['path'])
 
+    def _template(template_name):
+        return self.settings['templates'][os.path.join(self.settings['path'], template_name)]
+
     def _index_template(self, template_path):
         self.templates[template_path] = LocalTemplate(template_path)
 
     @property
     def installed_templates(self):
-        return sorted(self.settings.templates.values(), key=lambda template: template.name)
+        return sorted(self.settings['templates'].values(), key=lambda template: template.name)
 
     def install(self, template_name, look_remotely=True):
         self.uninstall(os.path.basename(template_name))
@@ -57,7 +60,7 @@ class Instantly(object):
 
         if os.path.isdir(template_name):
             try:
-                shutil.copytree(template_name, self.settings.path)
+                shutil.copytree(template_name, self.settings['path'])
                 return True
             except Exception:
                 return False
@@ -70,7 +73,7 @@ class Instantly(object):
             return False
 
         self.uninstall(os.path.basename(template_name))
-        install_location = os.path.join(self.settings.path, templateName)
+        install_location = os.path.join(self.settings['path'], templateName)
         tar_file_name = install_location + ".tar.gz"
         with open(tar_file_name, "wb") as tar:
             tar.write(template['template'].decode("base64").decode("zlib"))
@@ -84,7 +87,7 @@ class Instantly(object):
         return True
 
     def uninstall(self, template_name):
-        template = settings.templates.pop(os.path.join(self.settings.path, template_name), None)
+        template = settings.templates.pop(os.path.join(self.settings['path'], template_name), None)
         if not template:
             return False
 
@@ -98,3 +101,6 @@ class Instantly(object):
 
     def unshare(self, template_name):
         return self.client.unshare(template_name)
+
+    def expand(self, template_name, arguments):
+        return self._template(template_name).expand(self.run_path, arguments)

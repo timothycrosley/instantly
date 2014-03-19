@@ -34,7 +34,8 @@ MAX_CONFIG_SEARCH_DEPTH = 25 # The number of parent directories instantly will l
 
 default = {'auto_update_templates': True,
            'templates': {},
-           'path': os.path.expanduser('~/.instant_templates')}
+           'path': os.path.expanduser('~/.instant_templates'),
+           'defaults': {}}
 
 @lru_cache()
 def from_path(path):
