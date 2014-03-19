@@ -49,16 +49,16 @@ def from_path(path):
 
 
 def create(directory):
-    first_template = os.path.join(templates_directory, 'create_instant_template')
-    os.path.makedirs(first_template)
-    settings = ConfigObj(os.path.join(templates_directory, "settings"), interpolation=False)
+    first_template = os.path.join(directory, 'create_instant_template')
+    os.makedirs(first_template)
+    settings = ConfigObj(os.path.join(directory, "settings"), interpolation=False)
     settings.update(default)
     settings.pop('templates', '')
     settings.write()
     with open(os.path.join(first_template, 'definition'), 'w') as definition_file:
         definition_file.write(_first_template.DEFINITION)
     with open(os.path.join(first_template, 'new_template'), 'w') as new_template_file:
-        definition_file.write(_first_template.NEW_TEMPLATE)
+        new_template_file.write(_first_template.NEW_TEMPLATE)
 
 
 def _update_settings_with_config(path, name, default, sections, computed_settings):
@@ -94,13 +94,7 @@ def _update_settings_with_config(path, name, default, sections, computed_setting
 def _read_config_file(file_path):
     computed_settings = {}
     with open(file_path) as config_file:
-        config = configparser.SafeConfigParser()
-        config.readfp(config_file)
-        settings = dict()
-        for section in sections:
-            if config.has_section(section):
-                settings.update(dict(config.items(section)))
-
+        settings = ConfigObj(config_file)
         for key, value in settings.items():
             access_key = key.replace('not_', '').lower()
             existing_value_type = type(default.get(access_key, ''))
@@ -115,3 +109,4 @@ def _read_config_file(file_path):
             else:
                 computed_settings[access_key] = existing_value_type(value)
     return computed_settings
+
