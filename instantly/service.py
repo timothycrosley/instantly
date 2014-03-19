@@ -22,8 +22,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import json
 import os
 import tarfile
+from getpass import getpass
 
 import requests
 from configobj import ConfigObj
@@ -46,17 +48,17 @@ class Client(object):
             username = raw_input("Username (email): ")
             password = getpass()
             self._session = requests.session()
-            requests.get('https://www.google.com/accounts/ClientLogin',
-                         params={"Email": username, "Passwd":  password, "service": "ah",
-                                 "source": BASE_URL, "accountType": "HOSTED_OR_GOOGLE"})
+            google_auth_request = requests.get('https://www.google.com/accounts/ClientLogin',
+                                               params={"Email": username, "Passwd":  password, "service": "ah",
+                                               "source": BASE_URL, "accountType": "HOSTED_OR_GOOGLE"})
             self._token = dict(item.split("=") for item in google_auth_request.content.split("\n") if item)['Auth']
 
         return self._session
 
     def with_authentication(self, api_call, method="post", *kargs, **kwargs):
-        self.session = self._get_authenticated_session()
-        self.session.get('http://www.instantly.pl/_ah/login', params={'continue': URL + api_call, 'auth': self._token})
-        return getattr(self.session, method)(URL + api_call, headers={'Authorization': "Basic %s" % google_token,
+        session = self._get_authenticated_session()
+        session.get('http://www.instantly.pl/_ah/login', params={'continue': URL + api_call, 'auth': self._token})
+        return getattr(session, method)(URL + api_call, headers={'Authorization': "Basic %s" % self._token,
                                                                       'Content-Type':'application/json'},
                                              *kargs, **kwargs)
 
@@ -65,17 +67,18 @@ class Client(object):
 
     def share(self, template_name):
         try:
-            template = ConfigObj(self.template_directory + template_name + "/definition", interpolation=False)
-            tarPath = self.template_directory + template_name + ".tar.gz"
+            template_location = os.path.join(self.template_directory, template_name)
+            template = ConfigObj(os.path.join(template_location, "definition"), interpolation=False)
+            tarPath = os.path.join(self.template_directory, template_name + ".tar.gz")
             with tarfile.open(tarPath, "w") as tar:
                 tar.dereference = True
-                tar.add(self.template_directory + template_name, arcname=template_name)
+                tar.add(template_location, arcname=template_name)
             with open(tarPath, 'rb') as tar:
                 encoded_template = tar.read().encode("zlib").encode("base64")
 
-            self.with_authentication("InstantTemplate", data={"license":template.get("license", ""),
+            self.with_authentication("InstantTemplate", data=json.dumps({"license":template.get("license", ""),
                                             "name":template_name, "description":template.get("description", ""),
-                                            "template":encoded_template})
+                                            "template":encoded_template}))
             os.remove(tarPath)
         except Exception:
             return False
