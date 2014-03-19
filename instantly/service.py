@@ -56,12 +56,12 @@ class Client(object):
     def with_authentication(self, api_call, method="post", *kargs, **kwargs):
         self.session = self._get_authenticated_session()
         self.session.get('http://www.instantly.pl/_ah/login', params={'continue': URL + api_call, 'auth': self._token})
-        return getattr(self.session, method)(API + api_call, headers={'Authorization': "Basic %s" % google_token,
+        return getattr(self.session, method)(URL + api_call, headers={'Authorization': "Basic %s" % google_token,
                                                                       'Content-Type':'application/json'},
                                              *kargs, **kwargs)
 
     def without_authentication(self, api_call, method="get", *kargs, **kwargs):
-        return getattr(requests, method)(API + api_call, *kargs, **kwargs)
+        return getattr(requests, method)(URL + api_call, *kargs, **kwargs)
 
     def share_template(self, template_name):
         try:
@@ -73,8 +73,8 @@ class Client(object):
             with open(tarPath, 'rb') as tar:
                 encoded_template = tar.read().encode("zlib").encode("base64")
 
-            client.post("InstantTemplate", {"license":template["Info"].get("license", ""),
-                                            "name":templateName, "description":template["Info"].get("description", ""),
+            self.with_authentication("InstantTemplate", data={"license":template.get("license", ""),
+                                            "name":template_name, "description":template.get("description", ""),
                                             "template":encoded_template})
             os.remove(tarPath)
         except Exception:
@@ -88,12 +88,12 @@ class Client(object):
     def grab(self, template_name):
         template = self.without_authentication("InstantTemplate/%s" % template_name)
         if not template:
+            return None
+
+        return template.json
+
+    def unshare(self, template_name):
+        try:
+            return self.with_authentication("InstantlyTemplate", data={'name': template_name}, method="delete")
+        except Exception:
             return False
-
-        tar_path = self.template_path + template_name + ".tar.gz"
-        with open(tar_path, "wb") as tar:
-            tar.write(template['template'].decode("base64").decode("zlib"))
-        tarfile.open(tar_path).extractall(TEMPLATE_PATH)
-        os.remove(tar_path)
-
-        return True
