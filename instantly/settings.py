@@ -60,6 +60,7 @@ def create(directory):
     with open(os.path.join(first_template, 'new_template'), 'w') as new_template_file:
         new_template_file.write(_first_template.NEW_TEMPLATE)
 
+    return True
 
 def _update_settings_with_config(path, name, default, sections, computed_settings):
     templates_directory = default and os.path.expanduser(default)

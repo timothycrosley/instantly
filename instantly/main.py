@@ -54,6 +54,9 @@ def main():
         print("\t Find pre-made templates to automate a task online")
         print("instantly download [template name]")
         print("\t Add a template shared online to your local template repository")
+        print("instantly install [template directory]")
+        print("\t Installs an instant_template directory from the local file system "
+              "or online repository into your personal collection of templates")
         print("instantly uninstall [template name]")
         print("\t Permanently removes an installed template locally")
         print("instantly create_instant_template")
@@ -63,12 +66,10 @@ def main():
         print("\t Must register your google account with http://instantly.pl/ to do this")
         print("instantly unshare [template name]")
         print("\t Removes a template that you previously shared from the instantly online repository.")
-        print("instantly install [template directory]")
-        print("\t Installs an instant_template directory from the local file system "
-              "or online repository into your personal collection of templates")
+        print("instantly create_settings [template directory]")
+        print("\t Will create an alternate settings / template directory within the current directory.")
         sys.exit(0)
     elif command == "uninstall":
-
         if raw_input("Are you sure you want to delete %s (y/n)? " % template_name).lower() in ("y", "yes"):
             if instantly.uninstall(template_name):
                 print("Successfully removed %s from local templates" % template_name)
@@ -78,6 +79,18 @@ def main():
     elif command == "share":
         if instantly.share(template_name):
             print("Successfully shared %s, thanks for helping to expand the number of instant templates!" % template_name)
+            sys.exit(0)
+        else:
+            sys.exit(1)
+    elif command == "unshare":
+        if instantly.unshare(template_name):
+            print("Successfully un-shared %s!" % template_name)
+            sys.exit(0)
+        else:
+            sys.exit(1)
+    elif command == "create_settings":
+        if instantly.create_settings():
+            print("Successfully created a new settings / templates directory!")
             sys.exit(0)
         else:
             sys.exit(1)

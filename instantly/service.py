@@ -63,7 +63,7 @@ class Client(object):
     def without_authentication(self, api_call, method="get", *kargs, **kwargs):
         return getattr(requests, method)(URL + api_call, *kargs, **kwargs)
 
-    def share_template(self, template_name):
+    def share(self, template_name):
         try:
             template = ConfigObj(self.template_directory + template_name + "/definition", interpolation=False)
             tarPath = self.template_directory + template_name + ".tar.gz"
