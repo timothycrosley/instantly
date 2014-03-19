@@ -56,8 +56,25 @@ class Instantly(object):
         if os.path.isdir(template_name):
             try:
                 shutil.copytree(template_name, self.settings.path)
+                return True
             except Exception:
                 return False
+
+        return self.download(template_name)
+
+    def download(self, template_name):
+        template = client.grab(template_name)
+        if not template:
+            return False
+
+        self.remove(os.path.basename(template_name))
+        tar_file_name = os.path.join(self.settings.path, templateName + ".tar.gz")
+        with open(tar_file_name, "wb") as tar:
+            tar.write(template['template'].decode("base64").decode("zlib"))
+        tarfile.open(tar_file_name).extractall(TEMPLATE_PATH)
+        os.remove(tar_file_name)
+
+        return True
 
     def remove(self, template_name):
         template = settings.templates.pop(os.path.join(self.settings.path, template_name), None)
