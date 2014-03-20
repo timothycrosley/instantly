@@ -114,7 +114,7 @@ class Instantly(object):
 
     def installed_template(self, template_name):
         return self._template(template_name)
-    
+
     def get_template(self, template_name):
         local_template = self._template(template_name)
         if local_template:

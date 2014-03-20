@@ -54,6 +54,7 @@ def create(directory):
     settings = ConfigObj(os.path.join(directory, "settings"), interpolation=False)
     settings.update(default)
     settings.pop('templates', '')
+    settings.pop('path', '')
     settings.write()
     with open(os.path.join(first_template, 'definition'), 'w') as definition_file:
         definition_file.write(_first_template.DEFINITION)
@@ -77,7 +78,6 @@ def _update_settings_with_config(path, name, default, sections, computed_setting
 
     if not os.path.isdir(templates_directory):
         create(templates_directory)
-
     computed_settings['path'] = templates_directory
 
     templates = {}
