@@ -188,7 +188,7 @@ class LocalTemplate(Template):
                 for script in onfinish:
                     Popen(script, shell=True).wait()
 
-        return True
+        return self.make_substitutions(self.finish_message, substitutions)
 
 
 class RemoteTemplate(Template):
