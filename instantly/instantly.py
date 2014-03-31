@@ -112,6 +112,9 @@ class Instantly(object):
     def create_settings(self):
         return settings.create(os.path.join(self.run_path, ".instant_templates"))
 
+    def installed_template(self, template_name):
+        return self._template(template_name)
+
     def get_template(self, template_name):
         local_template = self._template(template_name)
         if local_template:

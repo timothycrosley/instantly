@@ -27,8 +27,6 @@ from pies.overrides import *
 from . import __version__
 from .instantly import Instantly
 
-TYPE_MAP = {'string': str, 'str': str, 'int': int, 'bool': bool}
-
 
 def main():
     instantly = Instantly()
@@ -67,6 +65,8 @@ def main():
         print("\t Must register your google account with http://instantly.pl/ to do this")
         print("instantly unshare [template name]")
         print("\t Removes a template that you previously shared from the instantly online repository.")
+        print("instantly location [template name]")
+        print("\t Will tell you where the specified template is located on disk.")
         print("instantly create_settings [template directory]")
         print("\t Will create an alternate settings / template directory within the current directory.")
         print("instantly version")
@@ -81,6 +81,13 @@ def main():
                 sys.exit(1)
     elif command == "version":
         print("instantly v. {0}".format(__version__))
+        sys.exit(0)
+    elif command == "location":
+        template = instantly.installed_template(template_name)
+        if not template:
+            print("Sorry template does not exist!")
+            sys.exit(1)
+        return template.location
         sys.exit(0)
     elif command == "share":
         if instantly.share(template_name):
@@ -146,7 +153,7 @@ def main():
 
                 prompt = argument_definition.get('prompt', '')
                 if default:
-                    prompt += " [Default: {0}]" + default
+                    prompt += " [Default: {0}]".format(default)
                 if argument_type == "bool":
                     prompt += " (y/n)"
                 prompt += ": "
@@ -160,18 +167,23 @@ def main():
                         elif value.lower() in ("n", "no"):
                             value = False
                         else:
-                            value = ""
+                            value = default or ""
                     elif argument_type == "int":
                         if value.isdigit():
                             value = int(value)
+                        elif not value:
+                            value = default
                         else:
                             value = ""
+                    elif not value:
+                        value = default
                 arguments[argument] = value
 
-        if instantly.expand(template_name, arguments):
+        success_message = instantly.expand(template_name, arguments)
+        if success_message != False:
             print("Successfully ran '{0}'!".format(template_name))
-            if template.finish_message:
-                print(template.finish_message)
+            if success_message:
+                print(success_message)
 
 if __name__ == "__main__":
     main()
