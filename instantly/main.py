@@ -179,10 +179,11 @@ def main():
                         value = default
                 arguments[argument] = value
 
-        if instantly.expand(template_name, arguments):
+        success_message = instantly.expand(template_name, arguments)
+        if success_message != False:
             print("Successfully ran '{0}'!".format(template_name))
-            if template.finish_message:
-                print(template.finish_message)
+            if success_message:
+                print(success_message)
 
 if __name__ == "__main__":
     main()
